@@ -11,12 +11,12 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="إدارة طلبات تيك توك وواتساب للبائع العراقي">
 <style>
   :root{
     --bg:#080c14; --card:#111827; --card2:#1a2332; --line:#232d42;
-    --txt:#e8edf7; --muted:#7f8ba3;
-    --green:#10b981; --cyan:#25f4ee; --pink:#fe2c55;
-    --amber:#f59e0b; --red:#ef4444; --blue:#3b82f6;
+    --txt:#e8edf7; --muted:#7f8ba3; --green:#10b981; --cyan:#25f4ee;
+    --pink:#fe2c55; --amber:#f59e0b; --red:#ef4444; --blue:#3b82f6;
     --radius:14px;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
@@ -27,6 +27,8 @@
     color:var(--txt); min-height:100vh; padding-bottom:40px; font-size:14px; line-height:1.5;
     -webkit-tap-highlight-color:transparent;
   }
+  
+  /* ===== Auth Screen ===== */
   #authScreen{ position:fixed; inset:0; background:var(--bg); z-index:1000; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:20px; }
   .auth-box{ width:100%; max-width:400px; background:var(--card); padding:30px; border-radius:var(--radius); border:1px solid var(--line); box-shadow:0 20px 40px rgba(0,0,0,0.4); }
   .auth-logo{font-size:40px; text-align:center; margin-bottom:10px;}
@@ -36,8 +38,9 @@
   .auth-input:focus{border-color:var(--green);}
   .auth-btn{ width:100%; padding:12px; border-radius:10px; border:none; background:linear-gradient(135deg,var(--green),#059669); color:#fff; font-weight:700; font-size:14px; cursor:pointer; margin-bottom:10px; font-family:inherit; }
   .auth-btn.secondary{background:transparent; border:1px solid var(--line); color:var(--txt);}
-  .auth-error{color:var(--red); font-size:12px; text-align:center; margin-bottom:10px; display:none;}
+  .auth-error{color:var(--red); font-size:13px; text-align:center; margin-bottom:10px; display:none; background:rgba(239,68,68,.1); padding:10px; border-radius:8px; border:1px solid rgba(239,68,68,.3);}
   
+  /* ===== Header ===== */
   header{ position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:14px 22px; background:rgba(8,12,20,.9); backdrop-filter:blur(12px); border-bottom:1px solid var(--card2); padding-top:calc(14px + env(safe-area-inset-top)); }
   .logo{ width:42px; height:42px; border-radius:12px; display:grid; place-items:center; font-size:22px; background:linear-gradient(135deg,var(--green),var(--cyan)); box-shadow:0 0 22px rgba(16,185,129,.35); }
   .brand h1{font-size:17px;} .brand p{font-size:12px; color:var(--muted);}
@@ -50,6 +53,8 @@
   .btn.danger{background:rgba(239,68,68,.1); color:#f87171; border-color:rgba(239,68,68,.3);}
   .btn.tiny{padding:7px 12px; font-size:12px;}
   .btn.close{width:100%; margin-top:14px;}
+  
+  /* ===== KPIs & Layout ===== */
   .kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; padding:20px 22px; }
   .kpi{ background:linear-gradient(160deg,var(--card),#16202f); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; display:flex; gap:12px; align-items:center; position:relative; overflow:hidden; }
   .kpi::before{ content:""; position:absolute; inset-inline-start:0; top:0; height:100%; width:3px; background:linear-gradient(180deg,var(--green),var(--cyan)); }
@@ -59,6 +64,8 @@
   .kval.cyan{color:var(--cyan);} .kval.blue{color:#60a5fa;} .kval.amber{color:#fbbf24;} .kval.green{color:#34d399;} .kval.sm{font-size:16px;}
   .layout{display:grid; grid-template-columns:1fr 320px; gap:18px; padding:0 22px;}
   @media(max-width:950px){ .layout{grid-template-columns:1fr;} }
+  
+  /* ===== Toolbar & Orders ===== */
   .toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px;}
   .tabs{display:flex; gap:6px; flex-wrap:wrap; flex:1;}
   .tab{ padding:8px 14px; border-radius:10px; background:var(--card); border:1px solid var(--line); color:#a8b4cc; font-size:12.5px; font-weight:600; cursor:pointer; transition:.2s; font-family:inherit; }
@@ -83,12 +90,16 @@
   .badge.cancelled{background:rgba(239,68,68,.15); color:#f87171; border:1px solid rgba(239,68,68,.3);}
   .badge.returned{background:rgba(148,163,184,.15); color:#94a3b8; border:1px solid rgba(148,163,184,.3);}
   .empty{ text-align:center; padding:60px 20px; color:var(--muted); background:var(--card); border-radius:var(--radius); border:1px dashed var(--line); }
+  
+  /* ===== Side Panel ===== */
   .panel{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin-bottom:14px; }
   .panel h3{font-size:13.5px; margin-bottom:12px; color:#c8d2e6;}
   .hint{font-size:12px; color:var(--muted); margin-bottom:10px; line-height:1.6;}
   .city-row{ display:flex; justify-content:space-between; align-items:center; padding:7px 0; font-size:12.5px; border-bottom:1px solid var(--card2); }
   .city-row:last-child{border-bottom:none;} .city-row .city-count{color:#34d399; font-weight:700;}
   .panel .btn{width:100%; margin-top:8px;}
+  
+  /* ===== Modals & Toast ===== */
   .modal{ position:fixed; inset:0; background:rgba(3,6,12,.8); backdrop-filter:blur(6px); display:none; place-items:center; padding:20px; z-index:150; }
   .modal.open{display:grid;}
   .modal-box{ width:min(600px,100%); max-height:90vh; overflow:auto; background:linear-gradient(165deg,#131b2b,#0e1524); border:1px solid var(--line); border-radius:18px; padding:24px; }
@@ -121,11 +132,14 @@
     <div class="auth-logo">📒</div>
     <div class="auth-title">دفتر الطلبات</div>
     <div class="auth-sub">سجل دخولك لإدارة طلبات متجرك</div>
-    <div class="auth-error" id="authError"></div>
-    <input type="email" id="authEmail" class="auth-input" placeholder="البريد الإلكتروني" autocomplete="email">
-    <input type="password" id="authPassword" class="auth-input" placeholder="كلمة المرور" autocomplete="current-password">
-    <button class="auth-btn" id="loginBtn">تسجيل الدخول</button>
-    <button class="auth-btn secondary" id="signupBtn">إنشاء حساب جديد</button>
+    
+    <form id="authForm" onsubmit="event.preventDefault();">
+      <div class="auth-error" id="authError"></div>
+      <input type="email" id="authEmail" class="auth-input" placeholder="البريد الإلكتروني" autocomplete="email" required>
+      <input type="password" id="authPassword" class="auth-input" placeholder="كلمة المرور (6 أحرف على الأقل)" autocomplete="current-password" required minlength="6">
+      <button type="button" class="auth-btn" id="loginBtn">تسجيل الدخول</button>
+      <button type="button" class="auth-btn secondary" id="signupBtn">إنشاء حساب جديد</button>
+    </form>
   </div>
 </div>
 
@@ -165,30 +179,18 @@
 <div class="modal" id="waModal"><div class="modal-box" id="waBox"></div></div>
 <div id="toast"></div>
 
-<!-- مكتبة Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-// ====== أداة اكتشاف الأخطاء ======
-window.onerror = function(msg, url, line, col, error) {
-  alert("حدث خطأ في الكود:\n" + msg + "\nفي السطر: " + line);
-  return false;
-};
-
 try {
   const SUPABASE_URL = 'https://opapfupwygwdayftqegd.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_Hgb1x4d8y7MlmLeELFHtTQ_pHD7NL78';
-  
-  if (!window.supabase) {
-    alert("لم يتم تحميل مكتبة Supabase. تأكد من اتصالك بالإنترنت وأعد تحميل الصفحة.");
-  }
-  
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  const STATUS = {
-    new: { label:'جديد', color:'#3b82f6' }, confirmed: { label:'مؤكد', color:'#06b6d4' },
-    shipped: { label:'قيد التوصيل', color:'#f59e0b' }, delivered: { label:'تم التسليم', color:'#10b981' },
-    cancelled: { label:'ملغي', color:'#ef4444' }, returned: { label:'مرتجع', color:'#94a3b8' }
+  const STATUS = { 
+    new: { label:'جديد' }, confirmed: { label:'مؤكد' }, 
+    shipped: { label:'قيد التوصيل' }, delivered: { label:'تم التسليم' }, 
+    cancelled: { label:'ملغي' }, returned: { label:'مرتجع' } 
   };
   const CITIES = ['بغداد','البصرة','الموصل','أربيل','النجف','كربلاء','السليمانية','الناصرية','الحلة','كركوك','الديوانية','السماوة','العمارة','دهوك','زاخو'];
   const SOURCE_LABEL = { tiktok:'تيك توك', whatsapp:'واتساب', manual:'يدوي' };
@@ -199,55 +201,61 @@ try {
   const total = o => (o.qty||0) * (o.price||0) + (o.delivery||0);
   const nowMs = () => Date.now();
 
-  function relTime(ts){ const diff = nowMs() - ts; const m = Math.floor(diff / 60000); if(m < 1) return 'الآن'; if(m < 60) return `منذ ${m} د`; const h = Math.floor(m/60); if(h < 24) return `منذ ${h} س`; const d = Math.floor(h/24); if(d < 7) return `منذ ${d} يوم`; return new Date(ts).toLocaleDateString('ar-IQ'); }
+  function relTime(ts){ const diff = nowMs() - ts; const m = Math.floor(diff / 60000); if(m < 1) return 'الآن'; if(m < 60) return `منذ ${m} د`; const h = Math.floor(m/60); if(h < 24) return `منذ ${h} س`; return `منذ ${Math.floor(h/24)} يوم`; }
   function showToast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2400); }
   function showLoading(show){ $('#loading').classList.toggle('show', show); }
 
   let orders = []; let currentUser = null; const state = { status:'all', query:'' };
 
+  function getAuthData() {
+    return { email: $('#authEmail').value.trim(), password: $('#authPassword').value };
+  }
+
   async function checkUser(){
-    const { data: { session } } = await supabase.auth.getSession();
-    if(session) {
-      currentUser = session.user; $('#authScreen').style.display = 'none'; $('#appScreen').style.display = 'block'; await loadOrders();
-    } else {
-      currentUser = null; $('#authScreen').style.display = 'flex'; $('#appScreen').style.display = 'none';
-    }
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if(session) {
+        currentUser = session.user; 
+        $('#authScreen').style.display = 'none'; 
+        $('#appScreen').style.display = 'block'; 
+        await loadOrders();
+      } else {
+        currentUser = null; 
+        $('#authScreen').style.display = 'flex'; 
+        $('#appScreen').style.display = 'none';
+      }
+    } catch(e) { showToast('حدث خطأ في الاتصال بالخادم'); }
   }
 
   $('#loginBtn').onclick = async () => {
+    const { email, password } = getAuthData();
+    const errEl = $('#authError');
+    
+    if(!email || !password) { errEl.textContent = 'يرجى إدخال البريد الإلكتروني وكلمة المرور'; errEl.style.display='block'; return; }
+    errEl.style.display = 'none'; showLoading(true);
+    
     try {
-      const email = $('#authEmail').value; const password = $('#authPassword').value; const errEl = $('#authError');
-      if(!email || !password) { errEl.textContent = 'أدخل البريد وكلمة المرور'; errEl.style.display='block'; return; }
-      errEl.style.display = 'none'; showLoading(true);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       showLoading(false);
-      if(error) { alert('خطأ في الدخول: ' + error.message); errEl.textContent = error.message; errEl.style.display='block'; }
+      if(error) { errEl.textContent = 'خطأ: ' + (error.message === 'Invalid login credentials' ? 'البريد أو كلمة المرور غير صحيحة' : error.message); errEl.style.display='block'; }
       else { checkUser(); }
-    } catch (e) { alert('خطأ غير متوقع: ' + e.message); showLoading(false); }
+    } catch (e) { showLoading(false); errEl.textContent = 'حدث خطأ في الاتصال.'; errEl.style.display='block'; }
   };
 
   $('#signupBtn').onclick = async () => {
+    const { email, password } = getAuthData();
+    const errEl = $('#authError');
+    
+    if(!email || !password) { errEl.textContent = 'يرجى إدخال البريد الإلكتروني وكلمة المرور'; errEl.style.display='block'; return; }
+    if(password.length < 6) { errEl.textContent = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'; errEl.style.display='block'; return; }
+    errEl.style.display = 'none'; showLoading(true);
+    
     try {
-      const email = $('#authEmail').value; const password = $('#authPassword').value; const errEl = $('#authError');
-      if(!email || !password) { errEl.textContent = 'أدخل البريد وكلمة المرور'; errEl.style.display='block'; return; }
-      if(password.length < 6) { errEl.textContent = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'; errEl.style.display='block'; return; }
-      errEl.style.display = 'none'; showLoading(true);
-      
-      // إظهار رسالة تأكيد قبل الاتصال
-      alert("جاري محاولة إنشاء الحساب لـ: " + email);
-      
       const { data, error } = await supabase.auth.signUp({ email, password });
       showLoading(false);
-      
-      if(error) { 
-        alert('خطأ من Supabase: ' + error.message); 
-        errEl.textContent = error.message; errEl.style.display='block'; 
-      } else { 
-        alert('تم إنشاء الحساب بنجاح!');
-        showToast('تم إنشاء الحساب! جاري الدخول...'); 
-        checkUser(); 
-      }
-    } catch (e) { alert('خطأ غير متوقع: ' + e.message); showLoading(false); }
+      if(error) { errEl.textContent = 'خطأ: ' + error.message; errEl.style.display='block'; }
+      else { showToast('تم إنشاء الحساب بنجاح!'); checkUser(); }
+    } catch (e) { showLoading(false); errEl.textContent = 'حدث خطأ في الاتصال.'; errEl.style.display='block'; }
   };
 
   $('#logoutBtn').onclick = async () => { await supabase.auth.signOut(); checkUser(); };
@@ -353,13 +361,14 @@ try {
   if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); }); }
   let deferredPrompt = null; const installBtn = document.getElementById('installBtn');
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; if (installBtn) installBtn.style.display = 'inline-flex'; });
-  if (installBtn) { installBtn.addEventListener('click', async () => { if (!deferredPrompt) { alert('في Chrome: القائمة (⋮) ← "تثبيت التطبيق".'); return; } deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; installBtn.style.display = 'none'; }); }
+  if (installBtn) { installBtn.addEventListener('click', async () => { if (!deferredPrompt) { showToast('لتثبيت التطبيق: اختر "إضافة إلى الشاشة الرئيسية" من قائمة المتصفح.'); return; } deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; installBtn.style.display = 'none'; }); }
   window.addEventListener('appinstalled', () => { if (installBtn) installBtn.style.display = 'none'; });
 
   checkUser();
 
 } catch (globalError) {
-  alert("خطأ فادح في التشغيل: " + globalError.message);
+  console.error("خطأ فادح:", globalError);
+  document.body.innerHTML = `<div style="text-align:center; padding:50px; color:#ef4444;"><h2>عذراً، حدث خطأ فني.</h2><p>يرجى تحديث الصفحة أو المحاولة لاحقاً.</p></div>`;
 }
 </script>
 </body>
