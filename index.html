@@ -170,7 +170,6 @@
   </main>
 </div>
 
-<!-- Modals -->
 <div class="modal" id="detailModal"><div class="modal-box" id="detailBox"></div></div>
 <div class="modal" id="addModal"><div class="modal-box" id="addBox"></div></div>
 <div class="modal" id="subModal"><div class="modal-box" id="subBox"></div></div>
@@ -187,7 +186,7 @@ try {
   const CITIES = ['بغداد','البصرة','الموصل','أربيل','النجف','كربلاء','السليمانية','الناصرية','الحلة','كركوك','الديوانية','السماوة','العمارة','دهوك','زاخو'];
   const SOURCE_LABEL = { tiktok:'تيك توك', whatsapp:'واتساب', manual:'يدوي' };
   
-  const FREE_LIMIT = 15; // الحد الأقصى للنسخة المجانية
+  const FREE_LIMIT = 15;
 
   const $ = s => document.querySelector(s);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -271,14 +270,15 @@ try {
     }
   }
 
-  async function deleteOrder(id) {
+  // تم إصلاح هذا الجزء بإضافة window
+  window.deleteOrder = async function(id) {
     if(!confirm("هل أنت متأكد من حذف هذا الطلب نهائياً؟")) return;
     showLoading(true);
     await supabase.from('orders').delete().eq('id', id);
     showLoading(false);
     $('#detailModal').classList.remove('open');
     loadOrders(); showToast('تم حذف الطلب');
-  }
+  };
 
   function renderKPIs(){
     const today = new Date().toDateString(); const todayCount = orders.filter(o => new Date(o.createdAt).toDateString() === today).length;
@@ -339,7 +339,6 @@ try {
   function openAddOrder(prefill = {}, editId = null){
     const p = Object.assign({ name:'', phone:'', city:'', address:'', product:'', qty:1, price:0, delivery:5000, source:'manual', notes:'' }, prefill);
     
-    // إضافة صندوق اللصق السريع فقط في حالة الطلب الجديد
     const pasteBoxHTML = editId ? '' : `
       <div id="quickPasteBox">
         <div style="font-size:12px; color:var(--cyan); margin-bottom:8px; font-weight:bold;">📱 هل لديك رسالة تيك توك فيس بوك واتساب؟ الصقها هنا لملء البيانات تلقائياً:</div>
@@ -366,7 +365,6 @@ try {
       <div class="form-actions"><button type="button" class="btn ghost" onclick="document.getElementById('addModal').classList.remove('open')">إلغاء</button><button type="submit" class="btn primary">💾 حفظ</button></div></form>
     `;
 
-    // برمجة زر اللصق السريع
     const parseBtn = $('#quickParseBtn');
     if(parseBtn) {
       parseBtn.onclick = () => {
@@ -397,7 +395,6 @@ try {
     openAddOrder({ name:o.name, phone:o.phone, city:o.city, address:o.address, product:o.product, qty:o.qty, price:o.price, delivery:o.delivery, source:o.source, notes:o.notes }, id);
   };
 
-  // نافذة الاشتراك
   window.openSubscriptionModal = () => {
     $('#subBox').innerHTML = `
       <div style="text-align:center; padding:10px 0;">
@@ -415,7 +412,6 @@ try {
     $('#subModal').classList.add('open');
   };
 
-  // دالة تحليل النص
   function parseWA(text){
     const res = { name:'', phone:'', city:'', address:'', product:'', qty:1, price:0, delivery:5000, source:'whatsapp', notes:'' };
     const phoneM = text.match(/07\d{2}[\s-]?\d{3}[\s-]?\d{4}/); if(phoneM) res.phone = phoneM[0].replace(/[\s-]/g,'');
