@@ -183,10 +183,10 @@ try {
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   // ⚠️ ضع مفتاح Gemini API الخاص بك هنا ⚠️
-  const GEMINI_API_KEY = 'AQ.Ab8RN6IQNW5uBQeuodxvrgQ70iyZ5Ryzg7lFqAVIHqcrQ_hqAA'; 
+  const GEMINI_API_KEY = 'ضع_مفتاحك_هنا'; 
 
   const STATUS = { new:{label:'جديد'}, confirmed:{label:'مؤكد'}, shipped:{label:'قيد التوصيل'}, delivered:{label:'تم التسليم'}, cancelled:{label:'ملغي'}, returned:{label:'مرتجع'} };
-  const CITIES = ['بغداد','البصرة','الموصل','أربيل','النجف','كربلاء','السليمانية','الناصرية','الحلة','كركوك','الديوانية','السماوة','العمارة','دهوك','زاخو'];
+  const CITIES = ['بغداد','البصرة','الموصل','أربيل','النجف','كربلاء','السليمانية','الناصرية','الحلة','كركوك','الديوانية','السماوة','العمارة','دهوك','زاخو','الزبير','الفلوجة','الرمادي','سامراء','تكريت','القائم','داقوق','الشرقاط'];
   
   const FREE_LIMIT = 15;
 
@@ -196,7 +196,7 @@ try {
   const total = o => (o.qty||0) * (o.price||0) + (o.delivery||0);
 
   function relTime(ts){ const diff = Date.now() - ts; const m = Math.floor(diff / 60000); if(m < 1) return 'الآن'; if(m < 60) return `منذ ${m} د`; const h = Math.floor(m/60); if(h < 24) return `منذ ${h} س`; return `منذ ${Math.floor(h/24)} يوم`; }
-  function showToast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 3000); }
+  function showToast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 4000); }
   function showLoading(show){ $('#loading').classList.toggle('show', show); }
 
   let orders = []; let currentUser = null; let isPremium = false; const state = { status:'all', query:'' };
@@ -337,6 +337,27 @@ try {
     $('#detailModal').classList.add('open');
   }
 
+  // دالة تحليل محلية احتياطية (تعمل بدون إنترنت)
+  function localParse(text) {
+    const res = {};
+    const phoneM = text.match(/07\d{2}[\s-]?\d{3}[\s-]?\d{4}/);
+    if(phoneM) res.phone = phoneM[0].replace(/[\s-]/g,'');
+    
+    for(const c of CITIES){ if(text.includes(c)){ res.city = c; break; } }
+    
+    const priceM = text.match(/(?:التكلفة|السعر|سعر|بـ)\s*[:：]?\s*(\d{3,})/i) || text.match(/\b(5000|10000|15000|20000|25000|30000|35000|40000|45000|50000|55000|60000)\b/);
+    if(priceM) res.price = parseFloat(priceM[1]);
+    
+    const delM = text.match(/(?:التوصيل|توصيل)\s*[:：]?\s*(\d{3,})/i) || text.match(/\b(2000|3000|4000|5000|6000|7000|8000)\b/);
+    if(delM) res.delivery = parseFloat(delM[1]);
+    
+    const words = text.split(' ');
+    if(words.length > 0) res.name = words[0];
+    
+    res.product = "يرجى كتابة المنتج هنا";
+    return res;
+  }
+
   function openAddOrder(prefill = {}, editId = null){
     const p = Object.assign({ name:'', phone:'', city:'', address:'', product:'', qty:1, price:0, delivery:5000, source:'manual', notes:'' }, prefill);
     
@@ -372,34 +393,20 @@ try {
         const text = $('#quickPaste').value.trim();
         if(!text) return showToast('الصق الرسالة أولاً');
         
-        parseBtn.textContent = '⏳ جاري التفكير والتحليل...';
+        parseBtn.textContent = '⏳ جاري التحليل...';
         parseBtn.disabled = true;
 
         try {
-          const promptText = `أنت مساعد خبير لصاحب متجر عراقي. استخرج بيانات الطلب من النص التالي (محادثة بين زبون وبائع).
-يجب أن تعيد النتيجة بتنسيق JSON فقط (بدون أي كلام إضافي أو علامات تنسيق مثل \`\`\`json) بالمفاتيح التالية:
-- "name": اسم الزبون (مثال: اسامة)
-- "phone": رقم الهاتف (إذا لم يوجد اتركه "")
-- "city": المدينة (يجب أن تكون واحدة من هذه القائمة فقط: ${CITIES.join(', ')})
-- "address": المنطقة أو العنوان التفصيلي (مثال: الزبير)
-- "product": وصف المنتج المطلوب (مثال: البوم صور كل صفحة بيها صورة)
-- "qty": الكمية (رقم، افتراضياً 1)
-- "price": سعر المنتج (رقم فقط، بدون فواصل أو عملة)
-- "delivery": سعر التوصيل (رقم فقط، إذا لم يذكر افتراضياً 0)
-- "notes": أي تفاصيل إضافية
-
-النص:
-"${text}"`;
+          const promptText = `أنت مساعد ذكي. استخرج بيانات الطلب من النص التالي وأعدها بصيغة JSON فقط دون أي كلام إضافي.
+المفاتيح المطلوبة: name (الاسم), phone (الهاتف), city (المدينة من القائمة: ${CITIES.join(', ')}), address (العنوان), product (المنتج), qty (الكمية), price (سعر المنتج), delivery (سعر التوصيل), notes (ملاحظات).
+النص: "${text}"`;
 
           const payload = {
             contents: [{ parts: [{ text: promptText }] }],
-            generationConfig: { 
-              responseMimeType: "application/json",
-              temperature: 0.1
-            }
+            generationConfig: { responseMimeType: "application/json", temperature: 0.1 }
           };
 
-          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -407,15 +414,12 @@ try {
 
           const data = await response.json();
           
-          if(!data.candidates || !data.candidates[0].content.parts[0].text) {
-             throw new Error("لم يتمكن الذكاء الاصطناعي من قراءة النص.");
+          if(data.error) {
+            throw new Error(data.error.message);
           }
 
           let resText = data.candidates[0].content.parts[0].text;
-          
-          // تنظيف النص من أي علامات يضيفها الذكاء الاصطناعي
           resText = resText.replace(/```json/g, '').replace(/```/g, '').trim();
-          
           const parsed = JSON.parse(resText);
 
           if(parsed.name) $('#addForm [name="name"]').value = parsed.name;
@@ -428,10 +432,21 @@ try {
           if(parsed.delivery) $('#addForm [name="delivery"]').value = parsed.delivery;
           if(parsed.notes) $('#addForm [name="notes"]').value = parsed.notes;
 
-          showToast('✨ تم استخراج البيانات بالذكاء الاصطناعي');
+          showToast('✨ تم استخراج البيانات بنجاح');
         } catch (error) {
-          console.error("Error details:", error);
-          showToast('عذراً، حدث خطأ: ' + error.message);
+          console.error("AI Error:", error);
+          showToast('⚠️ الذكاء الاصطناعي تعذر. تم استخدام المحلل المحلي.');
+          
+          // الخطة البديلة (المحلل المحلي)
+          const local = localParse(text);
+          if(local.name) $('#addForm [name="name"]').value = local.name;
+          if(local.phone) $('#addForm [name="phone"]').value = local.phone;
+          if(local.city) $('#addForm [name="city"]').value = local.city;
+          if(local.address) $('#addForm [name="address"]').value = local.address;
+          if(local.price) $('#addForm [name="price"]').value = local.price;
+          if(local.delivery) $('#addForm [name="delivery"]').value = local.delivery;
+          $('#addForm [name="product"]').value = text; // ضع النص كاملاً في المنتج للنسخ
+
         } finally {
           parseBtn.textContent = '✨ تحليل ذكي وملء الحقول';
           parseBtn.disabled = false;
