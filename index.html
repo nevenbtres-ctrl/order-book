@@ -182,9 +182,11 @@ try {
   const SUPABASE_KEY = 'sb_publishable_Hgb1x4d8y7MlmLeELFHtTQ_pHD7NL78';
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  // ⚠️ ضع مفتاح Gemini API الخاص بك هنا ⚠️
+  const GEMINI_API_KEY = 'AQ.Ab8RN6IQNW5uBQeuodxvrgQ70iyZ5Ryzg7lFqAVIHqcrQ_hqAA'; 
+
   const STATUS = { new:{label:'جديد'}, confirmed:{label:'مؤكد'}, shipped:{label:'قيد التوصيل'}, delivered:{label:'تم التسليم'}, cancelled:{label:'ملغي'}, returned:{label:'مرتجع'} };
   const CITIES = ['بغداد','البصرة','الموصل','أربيل','النجف','كربلاء','السليمانية','الناصرية','الحلة','كركوك','الديوانية','السماوة','العمارة','دهوك','زاخو'];
-  const SOURCE_LABEL = { tiktok:'تيك توك', whatsapp:'واتساب', manual:'يدوي' };
   
   const FREE_LIMIT = 15;
 
@@ -270,7 +272,6 @@ try {
     }
   }
 
-  // تم إصلاح هذا الجزء بإضافة window
   window.deleteOrder = async function(id) {
     if(!confirm("هل أنت متأكد من حذف هذا الطلب نهائياً؟")) return;
     showLoading(true);
@@ -341,9 +342,9 @@ try {
     
     const pasteBoxHTML = editId ? '' : `
       <div id="quickPasteBox">
-        <div style="font-size:12px; color:var(--cyan); margin-bottom:8px; font-weight:bold;">📱 هل لديك رسالة تيك توك فيس بوك واتساب؟ الصقها هنا لملء البيانات تلقائياً:</div>
-        <textarea id="quickPaste" rows="2" placeholder="مثال: أريد أطلب سيروم... الاسم: أحمد... رقم: 0770... العنوان: بغداد..."></textarea>
-        <button type="button" id="quickParseBtn" class="btn tiny primary" style="width:100%;">✨ استخراج البيانات وملء الحقول</button>
+        <div style="font-size:12px; color:var(--cyan); margin-bottom:8px; font-weight:bold;">🤖 الذكاء الاصطناعي: الصق المحادثة كاملة (رسالة الزبون وردك) وسأفهمها فوراً:</div>
+        <textarea id="quickPaste" rows="3" placeholder="مثال: اسامة البصرة الزبير البوم صور اريده صورة لكل صفحة كم التكلفة... 30,000 والتوصيل 5,000"></textarea>
+        <button type="button" id="quickParseBtn" class="btn tiny primary" style="width:100%;">✨ تحليل ذكي وملء الحقول</button>
       </div>
     `;
 
@@ -352,7 +353,7 @@ try {
       ${pasteBoxHTML}
       <form id="addForm"><div class="form-grid">
         <label>الاسم <input name="name" required value="${esc(p.name)}"></label>
-        <label>الهاتف <input name="phone" required value="${esc(p.phone)}"></label>
+        <label>الهاتف <input name="phone" value="${esc(p.phone)}" placeholder="اختياري"></label>
         <label>المدينة <select name="city" required>${CITIES.map(c => `<option ${p.city===c?'selected':''}>${c}</option>`).join('')}</select></label>
         <label>العنوان <input name="address" value="${esc(p.address)}"></label>
         <label class="wide">المنتج <input name="product" required value="${esc(p.product)}"></label>
@@ -367,23 +368,80 @@ try {
 
     const parseBtn = $('#quickParseBtn');
     if(parseBtn) {
-      parseBtn.onclick = () => {
+      parseBtn.onclick = async () => {
         const text = $('#quickPaste').value.trim();
         if(!text) return showToast('الصق الرسالة أولاً');
-        const parsed = parseWA(text);
-        if(parsed.name) $('#addForm [name="name"]').value = parsed.name;
-        if(parsed.phone) $('#addForm [name="phone"]').value = parsed.phone;
-        if(parsed.city) $('#addForm [name="city"]').value = parsed.city;
-        if(parsed.address) $('#addForm [name="address"]').value = parsed.address;
-        if(parsed.product) $('#addForm [name="product"]').value = parsed.product;
-        if(parsed.qty) $('#addForm [name="qty"]').value = parsed.qty;
-        showToast('✨ تم استخراج البيانات، يرجى مراجعتها');
+        
+        parseBtn.textContent = '⏳ جاري التفكير والتحليل...';
+        parseBtn.disabled = true;
+
+        try {
+          const promptText = `أنت مساعد خبير لصاحب متجر عراقي. استخرج بيانات الطلب من النص التالي (محادثة بين زبون وبائع).
+يجب أن تعيد النتيجة بتنسيق JSON فقط (بدون أي كلام إضافي أو علامات تنسيق مثل \`\`\`json) بالمفاتيح التالية:
+- "name": اسم الزبون (مثال: اسامة)
+- "phone": رقم الهاتف (إذا لم يوجد اتركه "")
+- "city": المدينة (يجب أن تكون واحدة من هذه القائمة فقط: ${CITIES.join(', ')})
+- "address": المنطقة أو العنوان التفصيلي (مثال: الزبير)
+- "product": وصف المنتج المطلوب (مثال: البوم صور كل صفحة بيها صورة)
+- "qty": الكمية (رقم، افتراضياً 1)
+- "price": سعر المنتج (رقم فقط، بدون فواصل أو عملة)
+- "delivery": سعر التوصيل (رقم فقط، إذا لم يذكر افتراضياً 0)
+- "notes": أي تفاصيل إضافية
+
+النص:
+"${text}"`;
+
+          const payload = {
+            contents: [{ parts: [{ text: promptText }] }],
+            generationConfig: { 
+              responseMimeType: "application/json",
+              temperature: 0.1
+            }
+          };
+
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await response.json();
+          
+          if(!data.candidates || !data.candidates[0].content.parts[0].text) {
+             throw new Error("لم يتمكن الذكاء الاصطناعي من قراءة النص.");
+          }
+
+          let resText = data.candidates[0].content.parts[0].text;
+          
+          // تنظيف النص من أي علامات يضيفها الذكاء الاصطناعي
+          resText = resText.replace(/```json/g, '').replace(/```/g, '').trim();
+          
+          const parsed = JSON.parse(resText);
+
+          if(parsed.name) $('#addForm [name="name"]').value = parsed.name;
+          if(parsed.phone) $('#addForm [name="phone"]').value = parsed.phone;
+          if(parsed.city && CITIES.includes(parsed.city)) $('#addForm [name="city"]').value = parsed.city;
+          if(parsed.address) $('#addForm [name="address"]').value = parsed.address;
+          if(parsed.product) $('#addForm [name="product"]').value = parsed.product;
+          if(parsed.qty) $('#addForm [name="qty"]').value = parsed.qty;
+          if(parsed.price) $('#addForm [name="price"]').value = parsed.price;
+          if(parsed.delivery) $('#addForm [name="delivery"]').value = parsed.delivery;
+          if(parsed.notes) $('#addForm [name="notes"]').value = parsed.notes;
+
+          showToast('✨ تم استخراج البيانات بالذكاء الاصطناعي');
+        } catch (error) {
+          console.error("Error details:", error);
+          showToast('عذراً، حدث خطأ: ' + error.message);
+        } finally {
+          parseBtn.textContent = '✨ تحليل ذكي وملء الحقول';
+          parseBtn.disabled = false;
+        }
       };
     }
 
     $('#addForm').onsubmit = async (e) => {
       e.preventDefault(); const fd = new FormData(e.target);
-      const data = { name: fd.get('name'), phone: fd.get('phone'), city: fd.get('city'), address: fd.get('address'), product: fd.get('product'), qty: parseInt(fd.get('qty')), price: parseFloat(fd.get('price')), delivery: parseFloat(fd.get('delivery')), source: fd.get('source'), notes: fd.get('notes') };
+      const data = { name: fd.get('name'), phone: fd.get('phone') || 'غير مذكور', city: fd.get('city'), address: fd.get('address'), product: fd.get('product'), qty: parseInt(fd.get('qty')) || 1, price: parseFloat(fd.get('price')) || 0, delivery: parseFloat(fd.get('delivery')) || 0, source: fd.get('source'), notes: fd.get('notes') };
       if(await saveOrder(data, editId)) { $('#addModal').classList.remove('open'); showToast('تم الحفظ'); loadOrders(); }
     };
     $('#addModal').classList.add('open');
@@ -411,18 +469,6 @@ try {
     `;
     $('#subModal').classList.add('open');
   };
-
-  function parseWA(text){
-    const res = { name:'', phone:'', city:'', address:'', product:'', qty:1, price:0, delivery:5000, source:'whatsapp', notes:'' };
-    const phoneM = text.match(/07\d{2}[\s-]?\d{3}[\s-]?\d{4}/); if(phoneM) res.phone = phoneM[0].replace(/[\s-]/g,'');
-    const nameM = text.match(/(?:الاسم|اسمي|الاسم الكامل)\s*[:：]?\s*(.+)/i); if(nameM) res.name = nameM[1].trim().split('\n')[0];
-    const addrM = text.match(/(?:العنوان|السكن|المنطقة|أقطن)\s*[:：]?\s*(.+)/i); if(addrM) res.address = addrM[1].trim().split('\n')[0];
-    for(const c of CITIES){ if(text.includes(c)){ res.city = c; break; } }
-    const qtyM = text.match(/(?:الكمية|العدد|كمية)\s*[:：]?\s*(\d+)/i); if(qtyM) res.qty = parseInt(qtyM[1]) || 1;
-    const prodM = text.match(/(?:أطلب|اطلب|أريد|اريد|منتج)\s*[:：]?\s*(.+)/i); if(prodM) res.product = prodM[1].trim().split('\n')[0];
-    if(!res.name && !res.phone && !res.product){ res.notes = text.slice(0, 200); }
-    return res;
-  }
 
   $('#addOrder').onclick = () => openAddOrder();
   $('#tabs').addEventListener('click', e => { const t = e.target.closest('[data-tab]'); if(t) { state.status = t.dataset.tab; renderTabs(); renderOrders(); } });
